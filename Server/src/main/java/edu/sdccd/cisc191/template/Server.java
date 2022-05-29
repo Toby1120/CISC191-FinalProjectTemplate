@@ -1,52 +1,153 @@
-package edu.sdccd.cisc191.template;
+package edu.sdccd.cisc191;
 
-import java.net.*;
-import java.io.*;
+import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
-/**
- * This program is a server that takes connection requests on
- * the port specified by the constant LISTENING_PORT.  When a
- * connection is opened, the program sends the current time to
- * the connected socket.  The program will continue to receive
- * and process connections until it is killed (by a CONTROL-C,
- * for example).  Note that this server processes each connection
- * as it is received, rather than creating a separate thread
- * to process the connection.
- */
-public class Server {
-    private ServerSocket serverSocket;
-    private Socket clientSocket;
-    private PrintWriter out;
-    private BufferedReader in;
+public class Main extends Application {
 
-    public void start(int port) throws Exception {
-        serverSocket = new ServerSocket(port);
-        clientSocket = serverSocket.accept();
-        out = new PrintWriter(clientSocket.getOutputStream(), true);
-        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    //application stage
+    Stage window;
+    TableView<Product> table;
+    TextField nameInput, priceInput, quantityInput;
 
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            CustomerRequest request = CustomerRequest.fromJSON(inputLine);
-            CustomerResponse response = new CustomerResponse(request.getId(), "Jane", "Doe");
-            out.println(CustomerResponse.toJSON(response));
-        }
+    //basic launch function
+    public static void main (String[] args){
+        launch(args);
     }
 
-    public void stop() throws IOException {
-        in.close();
-        out.close();
-        clientSocket.close();
-        serverSocket.close();
+    @Override
+    public void start (Stage primaryStage)throws Exception {
+        window = primaryStage;
+        window.setTitle("thenewboston-javaFX");
+
+        //Name Column
+        TableColumn<Product, String> nameColumn= new TableColumn<>("Name");
+        nameColumn.setMinWidth(200);
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+
+
+//Price column
+        TableColumn<Product, String> priceColumn = new TableColumn<>("Price");
+        priceColumn.setMinWidth(100);
+        priceColumn.setCellValueFactory(new PropertyValueFactory<>("price"));
+
+
+        //Quantity column
+        TableColumn<Product, String> quantityColumn = new TableColumn<>("Quantity");
+        quantityColumn.setMinWidth(100);
+        quantityColumn.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+
+        //Name input
+        nameInput = new TextField();
+        nameInput.setPromptText("Name");
+        nameInput.setMinWidth(100);
+
+        //Price input
+        priceInput = new TextField();
+        priceInput.setPromptText("price");
+
+
+        //Quantity input
+        quantityInput =new TextField();
+        quantityInput.setPromptText("Quantity");
+
+
+
+
+
+        //Button
+        Button addButton= new Button("Add");
+        addButton.setOnAction(e-> addButtonClicked());
+        Button deleteButton= new Button("Delete");
+        deleteButton.setOnAction(e-> deleteButtonClicked());
+
+
+
+        HBox hBox = new HBox();
+        hBox.setPadding(new Insets(10,10,10,10));
+        hBox.setSpacing(10);
+        hBox.getChildren().addAll(nameInput, priceInput, quantityInput, addButton, deleteButton);
+
+        table = new TableView<>();
+        table.setItems(getProduct());
+        table.getColumns().addAll (nameColumn, priceColumn, quantityColumn);
+
+
+
+
+        VBox vBox = new VBox();
+        vBox.getChildren().addAll(table, hBox);
+
+
+        Scene scene = new Scene(vBox);
+        window.setScene(scene);
+        window.show();
+
     }
 
-    public static void main(String[] args) {
-        Server server = new Server();
-        try {
-            server.start(4444);
-            server.stop();
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
+
+
+    public void addButtonClicked(){
+        Product product = new Product();
+        product.setName(nameInput.getText());
+        product.setPrice(Double.parseDouble(priceInput.getText()));
+        product.setQuantity(Integer.parseInt(quantityInput.getText()));
+        table.getItems().add(product);
+        nameInput.clear();
+        priceInput.clear();
+        quantityInput.clear();
+
+
+
     }
-} //end class Server
+    //Delete button clicked
+    public void deleteButtonClicked() {
+        ObservableList<Product> productSelected, allProducts;
+        allProducts = table.getItems();
+        productSelected = table.getSelectionModel().getSelectedItems();
+
+        productSelected.forEach(allProducts::remove);
+
+    }
+
+    //default parameter
+    public ObservableList<Product> getProduct(){
+        ObservableList<Product> products = FXCollections.observableArrayList();
+        products.add(new Product("Laptop", 859.00, 20));
+        products.add(new Product("Bouncy Ball", 2.49, 198));
+        products.add(new Product("toilet",99.00,74));
+        products.add(new Product("The Notebook DVD", 19.99, 12));
+        products.add(new Product("corn", 1.49,856));
+        return products;
+    }
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
